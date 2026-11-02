@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StarTube</title>
+<meta name="description" content="알고리즘 없이, 엄선한 스타트업·창업·AI 영상만 모아 보는 곳">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://i.ytimg.com https://yt3.ggpht.com; frame-src https://www.youtube-nocookie.com; connect-src 'self' https://api.github.com; object-src 'none'; base-uri 'none'">
+<style>
+:root {
+  --bg: #fff; --bg2: #f2f2f2; --bg3: #e5e5e5; --text: #0f0f0f; --muted: #606060;
+  --line: #e5e5e5; --accent: #6d5dfc; --chip-on: #0f0f0f; --chip-on-text: #fff;
+  --hover: rgba(0,0,0,.05); --link: #065fd4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0f; --bg2: #272727; --bg3: #3f3f3f; --text: #f1f1f1; --muted: #aaa;
+    --line: #303030; --accent: #8b7dff; --chip-on: #f1f1f1; --chip-on-text: #0f0f0f; --hover: rgba(255,255,255,.08); --link: #3ea6ff;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); }
+body { font: 14px/1.4 Roboto, "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", sans-serif; }
+a { color: inherit; text-decoration: none; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { background: none; border: 0; cursor: pointer; }
+svg { width: 24px; height: 24px; fill: currentColor; flex: none; }
+:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+
+/* top bar */
+.top { position: fixed; inset: 0 0 auto 0; height: 56px; z-index: 20; background: var(--bg);
+  display: flex; align-items: center; justify-content: space-between; padding: 0 24px; gap: 16px; }
+.brand { flex: 1 0 0; display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 20px; letter-spacing: -.6px; }
+.search { flex: 0 1 600px; display: flex; min-width: 0; }
+.search input { flex: 1; min-width: 0; height: 40px; padding: 0 16px; font-size: 16px; background: var(--bg);
+  border: 1px solid var(--bg3); border-right: 0; border-radius: 40px 0 0 40px; outline: none; }
+.search input:focus { border-color: var(--link); }
+.search button { width: 64px; height: 40px; border: 1px solid var(--bg3); background: var(--bg2);
+  border-radius: 0 40px 40px 0; display: grid; place-items: center; }
+.right { flex: 1 0 0; display: flex; justify-content: flex-end; }
+.lang { height: 32px; padding: 0 12px; border-radius: 16px; border: 1px solid var(--bg3); font-size: 13px; font-weight: 500; }
+.lang:hover { background: var(--hover); }
+
+/* sidebar (모바일에선 하단 탭바) */
+.side { position: fixed; top: 56px; bottom: 0; left: 0; width: 220px; overflow-y: auto; padding: 12px; background: var(--bg); z-index: 15; }
+.side a { display: flex; align-items: center; gap: 24px; height: 40px; padding: 0 12px; border-radius: 10px; }
+.side a:hover { background: var(--hover); }
+.side a.on { background: var(--bg2); font-weight: 500; }
+.side hr { border: 0; border-top: 1px solid var(--line); margin: 12px 0; }
+.side .foot { padding: 16px 12px; color: var(--muted); font-size: 12px; }
+main { margin-left: 220px; padding: 56px 24px 40px; }
+
+/* chips */
+.chips { position: sticky; top: 56px; z-index: 5; background: var(--bg); display: flex; gap: 12px; padding: 12px 0; overflow-x: auto; scrollbar-width: none; }
+.chip { flex: none; height: 32px; padding: 0 12px; border-radius: 8px; background: var(--bg2); font-weight: 500; white-space: nowrap; display: inline-flex; align-items: center; }
+.chip:hover { background: var(--bg3); }
+.chip.on { background: var(--chip-on); color: var(--chip-on-text); }
+
+/* grid */
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px 16px; padding-top: 12px; }
+@media (max-width: 1100px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.vcard { display: block; min-width: 0; }
+.thumb { position: relative; aspect-ratio: 16/9; border-radius: 12px; overflow: hidden; background: var(--bg2); }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dur { position: absolute; right: 6px; bottom: 6px; background: rgba(0,0,0,.8); color: #fff; font-size: 12px; font-weight: 500; padding: 1px 4px; border-radius: 4px; }
+.seenbar { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: var(--accent); }
+.later-btn { position: absolute; top: 6px; right: 6px; width: 32px; height: 32px; border-radius: 6px; background: rgba(0,0,0,.75); color: #fff;
+  display: grid; place-items: center; opacity: 0; transition: opacity .15s; }
+.later-btn svg { width: 20px; height: 20px; }
+.vcard:hover .later-btn, .later-btn.on, .later-btn:focus-visible { opacity: 1; }
+@media (hover: none) { .later-btn { opacity: 1; } }
+.meta { display: flex; gap: 12px; padding-top: 12px; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; flex: none; background: var(--bg2); object-fit: cover; }
+.meta h3 { margin: 0 0 4px; font-size: 16px; font-weight: 500; line-height: 22px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.sub { color: var(--muted); }
+.empty { color: var(--muted); padding: 60px 0; text-align: center; }
+.more { height: 1px; }
+.pagehead { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 24px 0 8px; }
+.pagehead h1 { margin: 0; font-size: 24px; }
+.btn { height: 36px; padding: 0 16px; border-radius: 18px; background: var(--bg2); font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { background: var(--bg3); }
+.btn.primary { background: var(--chip-on); color: var(--chip-on-text); }
+.btn svg { width: 20px; height: 20px; }
+
+/* watch: 왼쪽 플레이어, 오른쪽 다른 동영상 */
+.watch { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 24px; max-width: 1700px; padding-top: 24px; }
+.related { display: flex; flex-direction: column; gap: 8px; }
+.rcard { display: flex; gap: 8px; }
+.rcard .thumb { width: 168px; flex: none; border-radius: 8px; }
+.rcard h3 { margin: 0 0 4px; font-size: 14px; font-weight: 500; line-height: 20px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.rcard .sub { font-size: 12px; }
+@media (max-width: 1100px) { .watch { grid-template-columns: 1fr; } }
+.player { aspect-ratio: 16/9; border-radius: 12px; overflow: hidden; background: #000; }
+.player iframe { width: 100%; height: 100%; border: 0; display: block; }
+.watch h1 { font-size: 20px; margin: 12px 0; line-height: 28px; }
+.chanrow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.chanrow .avatar { width: 40px; height: 40px; }
+.chanrow .name { font-weight: 500; font-size: 16px; }
+.chanrow .btn { margin-left: auto; }
+.desc { background: var(--bg2); border-radius: 12px; padding: 12px; margin-top: 12px; white-space: pre-wrap; word-break: break-word; }
+.desc b { display: block; margin-bottom: 4px; }
+.desc a { color: var(--link); }
+
+/* channels */
+.cgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; padding-top: 12px; }
+.ccard { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 20px; border-radius: 12px; background: var(--bg2); text-align: center; }
+.ccard:hover { background: var(--bg3); }
+.ccard .avatar { width: 88px; height: 88px; }
+.ccard b { font-size: 16px; }
+.chead { display: flex; align-items: center; gap: 16px; margin: 24px 0 8px; }
+.chead .avatar { width: 80px; height: 80px; }
+.chead h1 { margin: 0; font-size: 28px; }
+
+/* admin */
+.admin { max-width: 900px; }
+.admin h2 { margin: 32px 0 8px; font-size: 18px; }
+.admin .row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.admin .row .grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin .row .btn { flex: none; height: 32px; }
+.admin form { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 4px; }
+.admin input, .admin select { height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--bg3); background: var(--bg); }
+.admin input { flex: 1; min-width: 200px; }
+.admin .status { color: var(--muted); min-height: 20px; }
+.admin a.ext { color: var(--link); }
+
+@media (max-width: 800px) {
+  .top { padding: 0 12px; gap: 8px; }
+  .brand, .right { flex: none; }
+  .search button { width: 48px; }
+  .side { top: auto; right: 0; width: auto; height: 60px; padding: 0; display: flex; border-top: 1px solid var(--line); overflow: hidden; }
+  .side a { flex: 1; flex-direction: column; justify-content: center; gap: 2px; height: 60px; padding: 0 2px; border-radius: 0; font-size: 10px; text-align: center; }
+  .side a.on { background: none; color: var(--accent); }
+  .side hr, .side .foot { display: none; }
+  main { margin-left: 0; padding: 56px 16px 84px; }
+  .grid { grid-template-columns: 1fr; gap: 24px; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="#/">StarTube</a>
+  <form class="search" id="search" role="search">
+    <input id="q" type="search" autocomplete="off" data-i18n-ph="search">
+    <button data-i18n-label="search"><svg viewBox="0 0 24 24"><path d="M20.87 20.17l-5.59-5.59C16.35 13.35 17 11.75 17 10c0-3.87-3.13-7-7-7s-7 3.13-7 7 3.13 7 7 7c1.75 0 3.35-.65 4.58-1.71l5.59 5.59.7-.71zM10 16c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/></svg></button>
+  </form>
+  <div class="right"><button class="lang" id="lang" data-i18n-label="lang"></button></div>
+</header>
+<nav class="side" id="side"></nav>
+<main id="view"></main>
+
+<script>
+const I18N = {
+  ko: {
+    search: "검색", lang: "English", langBtn: "EN",
+    home: "홈", later: "나중에 볼 영상", history: "시청 기록", channels: "채널",
+    all: "전체", startup: "스타트업·창업", vc: "투자·VC", ai: "AI 연구", videos: (n) => `동영상 ${n}개`,
+    tagline: "알고리즘 없이, 엄선한 채널의 영상만.", updated: "업데이트", export: "데이터 내보내기 (JSON)",
+    noResults: "결과가 없습니다.", noLater: "나중에 볼 영상이 없습니다. 썸네일의 시계 버튼으로 추가하세요.",
+    noHistory: "시청 기록이 없습니다.", clear: "모두 지우기", searchFor: (q) => `"${q}" 검색 결과`,
+    saveLater: "나중에 볼 영상", saved: "저장됨", more: "더보기", less: "간략히",
+    loading: "불러오는 중…", loadErr: "데이터를 불러오지 못했습니다.", report: "신고", admin: "관리", hide: "숨기기",
+  },
+  en: {
+    search: "Search", lang: "한국어", langBtn: "한국어",
+    home: "Home", later: "Watch later", history: "History", channels: "Channels",
+    all: "All", startup: "Startups", vc: "VC & Investing", ai: "AI Research", videos: (n) => `${n} videos`,
+    tagline: "No algorithm. Only hand-picked channels.", updated: "Updated", export: "Export data (JSON)",
+    noResults: "No results.", noLater: "Nothing saved yet. Use the clock button on a thumbnail.",
+    noHistory: "No watch history.", clear: "Clear all", searchFor: (q) => `Results for "${q}"`,
+    saveLater: "Watch later", saved: "Saved", more: "Show more", less: "Show less",
+    loading: "Loading…", loadErr: "Failed to load data.", report: "Report", admin: "Admin", hide: "Hide",
+  },
+};
+const CATS = ["startup", "vc", "ai"];
+
+const $ = (s, el = document) => el.querySelector(s);
+const view = $("#view");
+const store = {
+  get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+let lang = store.get("lang", navigator.language.startsWith("ko") ? "ko" : "en");
+let later = store.get("later", []);     // 최신이 뒤
+let history_ = store.get("history", []); // 최신이 뒤
+const t = (k, ...a) => { const v = I18N[lang][k] ?? k; return typeof v === "function" ? v(...a) : v; };
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
+// ---------- 포맷 ----------
+function ago(iso) {
+  const s = (Date.now() - new Date(iso)) / 1000, rtf = new Intl.RelativeTimeFormat(lang, { numeric: "auto" });
+  for (const [u, n] of [["year", 31536000], ["month", 2592000], ["week", 604800], ["day", 86400], ["hour", 3600], ["minute", 60]])
+    if (s >= n) return rtf.format(-Math.floor(s / n), u);
+  return rtf.format(0, "minute");
+}
+function dur(sec) {
+  if (!sec) return "";
+  const h = Math.floor(sec / 3600), m = Math.floor(sec / 60) % 60, s = String(sec % 60).padStart(2, "0");
+  return h ? `${h}:${String(m).padStart(2, "0")}:${s}` : `${m}:${s}`;
+}
+const linkify = (s) => esc(s).replace(/https?:\/\/[^\s<]+/g, (u) => `<a href="${u}" target="_blank" rel="noopener noreferrer">${u}</a>`);
+
+// ---------- 데이터 ----------
+let DATA = null, CH = {}, BYID = {};
+async function load() {
+  view.innerHTML = `<p class="empty">${t("loading")}</p>`;
+  try { DATA = await (await fetch("videos.json", { cache: "no-cache" })).json(); }
+  catch { view.innerHTML = `<p class="empty">${t("loadErr")}</p>`; return; }
+  CH = Object.fromEntries(DATA.channels.map((c) => [c.id, c]));
+  DATA.videos = DATA.videos.filter((v) => CH[v.channel]);
+  BYID = Object.fromEntries(DATA.videos.map((v) => [v.id, v]));
+  route();
+}
+
+// ---------- 나중에 볼 / 기록 ----------
+const CLOCK = '<svg viewBox="0 0 24 24"><path d="M14.97 16.95 10 13.87V7h2v5.76l4.03 2.49-1.06 1.7zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>';
+const CHECK = '<svg viewBox="0 0 24 24"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
+function toggleLater(id) {
+  later = later.includes(id) ? later.filter((v) => v !== id) : later.concat(id);
+  store.set("later", later);
+  return later.includes(id);
+}
+function markSeen(id) {
+  history_ = history_.filter((v) => v !== id).concat(id).slice(-500);
+  store.set("history", history_);
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest(".later-btn, [data-later]");
+  if (!b) return;
+  e.preventDefault(); e.stopPropagation();
+  const id = b.dataset.id, on = toggleLater(id);
+  document.querySelectorAll(`[data-id="${id}"]`).forEach((el) => {
+    el.classList.toggle("on", on);
+    el.innerHTML = el.classList.contains("later-btn") ? (on ? CHECK : CLOCK) : `${on ? CHECK : CLOCK}<span>${t(on ? "saved" : "saveLater")}</span>`;
+  });
+});
+
+// ---------- 카드 ----------
+// 업로더 썸네일(낚시) 대신 영상 중간 지점 장면. YouTube가 자동 생성하는 hq2.jpg
+const thumb = (v) => `https://i.ytimg.com/vi/${v.id}/hq2.jpg`;
+function card(v) {
+  const c = CH[v.channel], on = later.includes(v.id);
+  return `<a class="vcard" href="#/watch/${v.id}">
+    <div class="thumb"><img loading="lazy" src="${thumb(v)}" alt="">
+      ${v.dur ? `<span class="dur">${dur(v.dur)}</span>` : ""}
+      ${history_.includes(v.id) ? '<span class="seenbar"></span>' : ""}
+      <button class="later-btn${on ? " on" : ""}" data-id="${v.id}" aria-label="${t("saveLater")}">${on ? CHECK : CLOCK}</button></div>
+    <div class="meta">${c.avatar ? `<img class="avatar" loading="lazy" src="${esc(c.avatar)}" alt="">` : ""}
+      <div><h3 title="${esc(v.title)}">${esc(v.title)}</h3>
+      <div class="sub">${esc(c.name)} • ${ago(v.published)}</div></div></div></a>`;
+}
+// 무한 스크롤: 48개씩 그린다
+function grid(list, el) {
+  if (!list.length) { el.innerHTML = `<p class="empty">${t("noResults")}</p>`; return; }
+  el.innerHTML = `<div class="grid"></div><div class="more"></div>`;
+  const g = $(".grid", el), sentinel = $(".more", el);
+  let i = 0;
+  const step = () => { g.insertAdjacentHTML("beforeend", list.slice(i, i += 48).map(card).join("")); if (i >= list.length) io.disconnect(); };
+  const io = new IntersectionObserver((es) => es[0].isIntersecting && step(), { rootMargin: "800px" });
+  step(); io.observe(sentinel);
+}
+
+// ---------- 페이지 ----------
+function pageHome(params) {
+  const cat = params.get("cat") || "all";
+  view.innerHTML = `<div class="chips">${["all", ...CATS].map((c) => `<a class="chip${c === cat ? " on" : ""}" href="#/?cat=${c}">${t(c)}</a>`).join("")}</div><div id="list"></div>`;
+  grid(DATA.videos.filter((v) => cat === "all" || CH[v.channel].category === cat), $("#list"));
+}
+
+function pageSearch(params) {
+  const q = (params.get("q") || "").trim();
+  $("#q").value = q;
+  const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+  const list = DATA.videos.filter((v) => { const hay = `${v.title} ${CH[v.channel].name} ${v.desc}`.toLowerCase(); return terms.every((w) => hay.includes(w)); });
+  view.innerHTML = `<div class="pagehead"><h1>${esc(t("searchFor", q))}</h1></div><div id="list"></div>`;
+  grid(list, $("#list"));
+}
+
+function pageWatch(id) {
+  const v = BYID[id];
+  if (!v) { view.innerHTML = `<p class="empty">${t("noResults")}</p>`; return; }
+  markSeen(id);
+  const c = CH[v.channel], on = later.includes(id), long = v.desc.length > 200;
+  // 같은 채널 8개 + 같은 카테고리 다른 채널 12개, 최신순
+  const pool = DATA.videos.filter((x) => x.id !== id);
+  const related = [...pool.filter((x) => x.channel === v.channel).slice(0, 8),
+    ...pool.filter((x) => x.channel !== v.channel && CH[x.channel].category === c.category).slice(0, 12)]
+    .sort((a, b) => b.published.localeCompare(a.published));
+  view.innerHTML = `<div class="watch"><div>
+    <div class="player"><iframe src="https://www.youtube-nocookie.com/embed/${id}?rel=0&autoplay=1&hl=${lang}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen title="${esc(v.title)}"></iframe></div>
+    <h1>${esc(v.title)}</h1>
+    <div class="chanrow">${c.avatar ? `<img class="avatar" src="${esc(c.avatar)}" alt="">` : ""}
+      <a class="name" href="#/channel/${c.id}">${esc(c.name)}</a>
+      <button class="btn${on ? " on" : ""}" data-later data-id="${id}">${on ? CHECK : CLOCK}<span>${t(on ? "saved" : "saveLater")}</span></button>
+      ${ADMIN ? `<button class="btn" id="hidevid">${t("hide")}</button>`
+        : `<a class="btn" target="_blank" rel="noopener" href="https://github.com/${REPO}/issues/new?${new URLSearchParams({ template: "report.yml", title: `[신고] ${v.title}`, video: id })}">${t("report")}</a>`}</div>
+    <div class="desc"><b>${ago(v.published)}</b><span id="desc">${linkify(long ? v.desc.slice(0, 200) + "…" : v.desc)}</span>
+      ${long ? `<button class="sub" id="desctoggle">${t("more")}</button>` : ""}</div></div>
+    <div class="related">${related.map((r) => `<a class="rcard" href="#/watch/${r.id}">
+      <div class="thumb"><img loading="lazy" src="${thumb(r)}" alt="">${r.dur ? `<span class="dur">${dur(r.dur)}</span>` : ""}${history_.includes(r.id) ? '<span class="seenbar"></span>' : ""}</div>
+      <div><h3>${esc(r.title)}</h3><div class="sub">${esc(CH[r.channel].name)}</div><div class="sub">${ago(r.published)}</div></div></a>`).join("")}</div></div>`;
+  const tg = $("#desctoggle");
+  if (tg) tg.onclick = () => { const open = tg.textContent === t("more"); $("#desc").innerHTML = linkify(open ? v.desc : v.desc.slice(0, 200) + "…"); tg.textContent = t(open ? "less" : "more"); };
+  const hb = $("#hidevid");
+  if (hb) hb.onclick = async () => { hb.disabled = true; await hideVideo(id, v.title); hb.textContent = "숨김 요청됨 ✓"; };
+}
+
+function pageList(key) {
+  const ids = (key === "later" ? later : history_).slice().reverse();
+  view.innerHTML = `<div class="pagehead"><h1>${t(key)}</h1>${ids.length ? `<button class="btn" id="clear">${t("clear")}</button>` : ""}</div><div id="list"></div>`;
+  const list = ids.map((id) => BYID[id]).filter(Boolean);
+  if (!list.length) $("#list").innerHTML = `<p class="empty">${t(key === "later" ? "noLater" : "noHistory")}</p>`;
+  else grid(list, $("#list"));
+  const b = $("#clear");
+  if (b) b.onclick = () => { if (key === "later") later = []; else history_ = []; store.set(key, []); pageList(key); };
+}
+
+function pageChannels() {
+  view.innerHTML = `<div class="pagehead"><h1>${t("channels")}</h1></div>` + CATS.map((cat) => {
+    const cs = DATA.channels.filter((c) => c.category === cat);
+    return cs.length ? `<h2>${t(cat)}</h2><div class="cgrid">${cs.map((c) => `<a class="ccard" href="#/channel/${c.id}">
+      ${c.avatar ? `<img class="avatar" loading="lazy" src="${esc(c.avatar)}" alt="">` : ""}<b>${esc(c.name)}</b>
+      <span class="sub">${esc(c.handle)} · ${t("videos", DATA.videos.filter((v) => v.channel === c.id).length)}</span></a>`).join("")}</div>` : "";
+  }).join("");
+}
+
+function pageChannel(id) {
+  const c = CH[id];
+  if (!c) { view.innerHTML = `<p class="empty">${t("noResults")}</p>`; return; }
+  const list = DATA.videos.filter((v) => v.channel === id);
+  view.innerHTML = `<div class="chead">${c.avatar ? `<img class="avatar" src="${esc(c.avatar)}" alt="">` : ""}<div><h1>${esc(c.name)}</h1>
+    <div class="sub">${esc(c.handle)} · ${t(c.category)} · ${t("videos", list.length)}</div></div></div><div id="list"></div>`;
+  grid(list, $("#list"));
+}
+
+// ---------- 관리 ----------
+// 관리 키 = 저장소 쓰기 권한이 있는 GitHub 토큰. #/admin?key=토큰 으로 한 번 들어오면 이 브라우저에 저장된다.
+// 변경은 GitHub API로 channels.txt / hidden.txt 에 커밋 → 수집 워크플로가 돌며 videos.json 갱신.
+const REPO = "iamnotfemale/StarTube";
+let ADMIN = store.get("adminKey", null);
+async function gh(path, opts = {}) {
+  const r = await fetch(`https://api.github.com/repos/${REPO}/${path}`, { ...opts,
+    headers: { Authorization: `Bearer ${ADMIN}`, Accept: "application/vnd.github+json", ...opts.headers } });
+  if (!r.ok) throw new Error(`GitHub ${r.status}: ${(await r.json().catch(() => ({}))).message ?? ""}`);
+  return r.status === 204 ? null : r.json();
+}
+const b64d = (s) => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\n/g, "")), (c) => c.charCodeAt(0)));
+const b64e = (s) => { let bin = ""; for (const b of new TextEncoder().encode(s)) bin += String.fromCharCode(b); return btoa(bin); };
+async function readRepoFile(p) { const f = await gh(`contents/${p}`); return b64d(f.content); }
+// 매번 최신 sha를 읽고 바로 쓴다 (동시 편집은 409로 실패 → 다시 시도하면 됨)
+async function editRepoFile(p, edit, message) {
+  const f = await gh(`contents/${p}`);
+  await gh(`contents/${p}`, { method: "PUT", body: JSON.stringify({ message, sha: f.sha, content: b64e(edit(b64d(f.content))) }) });
+}
+const vidOf = (s) => s.match(/(?:v=|youtu\.be\/|watch\/|embed\/|shorts\/)([\w-]{11})/)?.[1] ?? (/^[\w-]{11}$/.test(s.trim()) ? s.trim() : null);
+function chanOf(s) {
+  s = s.trim();
+  const m = s.match(/youtube\.com\/(@[^/?#\s]+|channel\/(UC[\w-]{22}))/);
+  if (m) return m[2] || decodeURIComponent(m[1]);
+  return /^UC[\w-]{22}$/.test(s) || s.startsWith("@") ? s : s && `@${s}`;
+}
+async function hideVideo(id, title) {
+  await editRepoFile("hidden.txt", (txt) => txt.replace(/\n*$/, "\n") + `${id} # ${title.replace(/\s+/g, " ")}\n`, `hide ${id}`);
+  DATA.videos = DATA.videos.filter((v) => v.id !== id);
+  delete BYID[id];
+}
+
+async function pageAdmin() {
+  if (!ADMIN) { view.innerHTML = `<p class="empty">관리 키가 필요합니다. <code>#/admin?key=…</code> 링크로 접속하세요.</p>`; return; }
+  view.innerHTML = `<div class="admin"><div class="pagehead"><h1>관리</h1><button class="btn" id="logout">이 브라우저에서 키 지우기</button></div>
+    <p class="status" id="ast">불러오는 중…</p>
+    <h2>품질 검수 요청</h2><div id="reports"></div>
+    <h2>채널</h2><form id="addch"><select name="cat">${CATS.map((c) => `<option value="${c}">${t(c)}</option>`).join("")}</select>
+      <input name="ch" required placeholder="채널 주소, @핸들 또는 UC… 채널 ID"><button class="btn primary">추가</button></form><div id="chs"></div>
+    <h2>숨긴 영상</h2><form id="addhide"><input name="v" required placeholder="영상 주소 또는 ID"><button class="btn primary">숨기기</button></form><div id="hidden"></div></div>`;
+  const status = (s) => ($("#ast").textContent = s);
+  const run = (fn) => async (e) => {
+    e?.preventDefault?.();
+    status("저장 중…");
+    try { await fn(e); status("저장했습니다. 수집 워크플로가 돌고 나면 1~2분 뒤 사이트에 반영됩니다."); await draw(); }
+    catch (err) { status(`실패: ${err.message}`); }
+  };
+  $("#logout").onclick = () => { store.set("adminKey", null); ADMIN = null; location.hash = "#/"; };
+
+  async function draw() {
+    const [chTxt, hidTxt, issues] = await Promise.all([readRepoFile("channels.txt"), readRepoFile("hidden.txt"),
+      gh("issues?labels=report&state=open&per_page=100")]);
+    const byKey = Object.fromEntries(DATA.channels.flatMap((c) => [[c.handle, c], [c.id, c]]));
+    $("#reports").innerHTML = issues.length ? issues.map((i) => {
+      const vid = vidOf((i.body ?? "").match(/###[^\n]*\n+\s*(\S+)/)?.[1] ?? "");
+      const why = (i.body ?? "").match(/### 사유\s+(.+)/)?.[1] ?? "";
+      return `<div class="row"><div class="grow"><a class="ext" href="${esc(i.html_url)}" target="_blank" rel="noopener">#${i.number}</a>
+        ${esc(i.title)} <span class="sub">${esc(why)}${vid && !BYID[vid] ? " · 이미 목록에 없음" : ""}</span></div>
+        ${vid ? `<a class="btn" href="#/watch/${esc(vid)}">보기</a><button class="btn" data-hide-issue="${i.number}" data-vid="${esc(vid)}">숨기고 닫기</button>` : ""}
+        <button class="btn" data-close="${i.number}">닫기</button></div>`;
+    }).join("") : `<p class="sub">열린 요청이 없습니다.</p>`;
+    const chLines = chTxt.split(/\r?\n/).filter((l) => l.trim() && !l.trim().startsWith("#"));
+    $("#chs").innerHTML = chLines.map((l) => {
+      const [cat, key] = l.split("|").map((s) => s.trim()), c = byKey[key];
+      return `<div class="row"><span class="sub" style="width:96px">${esc(t(cat))}</span><div class="grow">${esc(c?.name ?? "(다음 수집 때 반영)")} <span class="sub">${esc(key)}</span></div>
+        <button class="btn" data-delch="${esc(l)}">삭제</button></div>`;
+    }).join("");
+    const hidLines = hidTxt.split(/\r?\n/).filter((l) => l.trim() && !l.trim().startsWith("#"));
+    $("#hidden").innerHTML = hidLines.length ? hidLines.map((l) => `<div class="row"><div class="grow">${esc(l)}</div><button class="btn" data-unhide="${esc(l)}">숨김 해제</button></div>`).join("")
+      : `<p class="sub">숨긴 영상이 없습니다.</p>`;
+    try { const r = (await gh("actions/runs?per_page=1")).workflow_runs[0];
+      status(r ? `최근 수집: ${r.status === "completed" ? (r.conclusion === "success" ? "성공" : "실패") : "진행 중"} · ${ago(r.created_at)}` : "");
+    } catch { status(""); } // 토큰에 Actions 읽기 권한이 없으면 생략
+  }
+
+  $("#addch").onsubmit = run(async (e) => {
+    const f = new FormData(e.target), key = chanOf(f.get("ch"));
+    await editRepoFile("channels.txt", (txt) => txt.replace(/\n*$/, "\n") + `${f.get("cat")} | ${key}\n`, `add channel ${key}`);
+    e.target.reset();
+  });
+  $("#addhide").onsubmit = run(async (e) => {
+    const id = vidOf(new FormData(e.target).get("v"));
+    if (!id) throw new Error("영상 ID를 찾지 못했습니다");
+    await hideVideo(id, BYID[id]?.title ?? "");
+    e.target.reset();
+  });
+  view.querySelector(".admin").onclick = (e) => {
+    const b = e.target.closest("button[data-delch], button[data-unhide], button[data-close], button[data-hide-issue]");
+    if (!b) return;
+    const d = b.dataset;
+    if (d.delch && confirm(`채널을 삭제할까요?\n${d.delch}`))
+      run(() => editRepoFile("channels.txt", (txt) => txt.split("\n").filter((l) => l.replace(/\r$/, "") !== d.delch).join("\n"), `remove channel ${d.delch}`))();
+    if (d.unhide) run(() => editRepoFile("hidden.txt", (txt) => txt.split("\n").filter((l) => l.replace(/\r$/, "") !== d.unhide).join("\n"), "unhide video"))();
+    const close = (n) => gh(`issues/${n}`, { method: "PATCH", body: JSON.stringify({ state: "closed" }) });
+    if (d.close) run(() => close(d.close))();
+    if (d.hideIssue) run(async () => { await hideVideo(d.vid, BYID[d.vid]?.title ?? ""); await close(d.hideIssue); })();
+  };
+  try { await draw(); } catch (err) { status(`불러오기 실패: ${err.message}`); }
+}
+
+// ---------- 레이아웃 / 라우터 ----------
+const ICONS = {
+  home: "M4 10v11h6v-7h4v7h6V10l-8-7z",
+  later: "M14.97 16.95 10 13.87V7h2v5.76l4.03 2.49-1.06 1.7zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z",
+  history: "M14.97 16.95 10 13.87V7h2v5.76l4.03 2.49-1.06 1.7zM22 12c0 5.51-4.49 10-10 10S2 17.51 2 12h1c0 4.96 4.04 9 9 9s9-4.04 9-9-4.04-9-9-9C8.81 3 5.92 4.64 4.28 7.38c-.11.18-.22.37-.31.56L3.94 8H8v1H1.96V3h1v4.74c.04-.09.07-.17.11-.25.11-.22.23-.42.35-.63C5.22 3.86 8.51 2 12 2c5.51 0 10 4.49 10 10z",
+  channels: "M10 18v-6l5 3-5 3zm7-15H7v1h10V3zm3 3H4v1h16V6zm2 3H2v12h20V9zM3 10h18v10H3V10z",
+  admin: "M12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7zm7.43-2.53c.04-.32.07-.64.07-.97s-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65A.49.49 0 0 0 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1s.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66z",
+};
+function renderSide(cur) {
+  const item = (k, href) => `<a href="${href}" class="${cur === k ? "on" : ""}"><svg viewBox="0 0 24 24"><path d="${ICONS[k]}"/></svg><span>${t(k)}</span></a>`;
+  $("#side").innerHTML = item("home", "#/") + item("later", "#/later") + item("history", "#/history") + "<hr>"
+    + item("channels", "#/channels") + (ADMIN ? item("admin", "#/admin") : "")
+    + `<div class="foot">${t("tagline")}${DATA ? `<br>${t("updated")} ${ago(DATA.updated)}<br><a href="videos.json" download style="text-decoration:underline">${t("export")}</a>` : ""}</div>`;
+}
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll("[data-i18n-label]").forEach((el) => el.setAttribute("aria-label", t(el.dataset.i18nLabel)));
+  document.querySelectorAll("[data-i18n-ph]").forEach((el) => (el.placeholder = t(el.dataset.i18nPh)));
+  $("#lang").textContent = t("langBtn");
+}
+function route() {
+  if (!DATA) return;
+  const [path, qs] = location.hash.slice(1).split("?");
+  const params = new URLSearchParams(qs), [, page, arg] = (path || "/").split("/");
+  if (page === "admin" && params.get("key")) { // 키를 저장하고 주소창·기록에서 지운다
+    ADMIN = params.get("key"); store.set("adminKey", ADMIN);
+    history.replaceState(null, "", `${location.pathname}#/admin`);
+  }
+  renderSide(page === "channel" ? "channels" : page || "home");
+  if (page !== "search") $("#q").value = "";
+  document.title = page === "watch" && BYID[arg] ? `${BYID[arg].title} - StarTube` : "StarTube";
+  ({ watch: () => pageWatch(arg), search: () => pageSearch(params), later: () => pageList("later"), history: () => pageList("history"),
+     channels: pageChannels, channel: () => pageChannel(arg), admin: pageAdmin }[page] || (() => pageHome(params)))();
+  window.scrollTo(0, 0);
+}
+
+addEventListener("hashchange", route);
+$("#search").onsubmit = (e) => { e.preventDefault(); const q = $("#q").value.trim(); location.hash = q ? `#/search?q=${encodeURIComponent(q)}` : "#/"; };
+$("#lang").onclick = () => { lang = lang === "ko" ? "en" : "ko"; store.set("lang", lang); applyLang(); route(); };
+addEventListener("keydown", (e) => {
+  if (e.key === "/" && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); $("#q").focus(); }
+});
+applyLang();
+load();
+</script>
+</body>
+</html>

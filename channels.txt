@@ -1,0 +1,20 @@
+# 카테고리 | 채널 (@핸들 또는 UC로 시작하는 채널 ID)
+# 카테고리: startup(스타트업·창업) / vc(투자·VC) / ai(AI 연구)
+# 수정 후 push 하면 GitHub Actions가 자동 수집 (로컬: node --env-file=.env fetch.mjs)
+
+# 한국어
+startup | @eo_korea
+startup | UCWgXoKQ4rl7SY9UHuAwxvzQ
+startup | @ttimestv
+startup | @dcampkor
+vc | @vc대장
+ai | @jocoding
+ai | @teddynote
+
+# 영어
+startup | @ycombinator
+startup | @LennysPodcast
+startup | @ecorner
+vc | @a16z
+ai | @AndrejKarpathy
+ai | @DwarkeshPatel

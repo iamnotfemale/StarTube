@@ -1,0 +1,26 @@
+name: 영상 신고 (품질 검수 요청)
+description: 주제와 맞지 않거나 품질이 낮은 영상을 알려주세요.
+title: "[신고] "
+labels: ["report"]
+body:
+  - type: input
+    id: video
+    attributes:
+      label: 영상 ID 또는 링크
+    validations:
+      required: true
+  - type: dropdown
+    id: reason
+    attributes:
+      label: 사유
+      options:
+        - 주제와 맞지 않음
+        - 낚시성·저품질
+        - 광고·홍보
+        - 기타
+    validations:
+      required: true
+  - type: textarea
+    id: detail
+    attributes:
+      label: 설명 (선택)
