@@ -379,7 +379,7 @@ async function readRepoFile(p) { const f = await gh(`contents/${p}`); return b64
 // 매번 최신 sha를 읽고 바로 쓴다 (동시 편집은 409로 실패 → 다시 시도하면 됨)
 async function editRepoFile(p, edit, message) {
   const f = await gh(`contents/${p}`);
-  await gh(`contents/${p}`, { method: "PUT", body: JSON.stringify({ message, sha: f.sha, content: b64e(edit(b64d(f.content))) }) });
+  await gh(`contents/${p}`, { method: "PUT", body: JSON.stringify({ message: message.replaceAll("@", ""), sha: f.sha, content: b64e(edit(b64d(f.content))) }) });
 }
 const vidOf = (s) => s.match(/(?:v=|youtu\.be\/|watch\/|embed\/|shorts\/)([\w-]{11})/)?.[1] ?? (/^[\w-]{11}$/.test(s.trim()) ? s.trim() : null);
 function chanOf(s) {
