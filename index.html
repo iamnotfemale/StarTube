@@ -55,7 +55,6 @@ svg { width: 24px; height: 24px; fill: currentColor; flex: none; }
 .side a:hover { background: var(--hover); }
 .side a.on { background: var(--bg2); font-weight: 500; }
 .side hr { border: 0; border-top: 1px solid var(--line); margin: 12px 0; }
-.side .foot { padding: 16px 12px; color: var(--muted); font-size: 12px; }
 main { margin-left: 220px; padding: 56px 24px 40px; }
 
 /* chips */
@@ -140,7 +139,7 @@ main { margin-left: 220px; padding: 56px 24px 40px; }
   .side { top: auto; right: 0; width: auto; height: 60px; padding: 0; display: flex; border-top: 1px solid var(--line); overflow: hidden; }
   .side a { flex: 1; flex-direction: column; justify-content: center; gap: 2px; height: 60px; padding: 0 2px; border-radius: 0; font-size: 10px; text-align: center; }
   .side a.on { background: none; color: var(--accent); }
-  .side hr, .side .foot { display: none; }
+  .side hr { display: none; }
   main { margin-left: 0; padding: 56px 16px 84px; }
   .grid { grid-template-columns: 1fr; gap: 24px; }
 }
@@ -164,7 +163,7 @@ const I18N = {
     search: "검색", lang: "English", langBtn: "EN",
     home: "홈", later: "나중에 볼 영상", history: "시청 기록", channels: "채널",
     all: "전체", startup: "스타트업·창업", vc: "투자·VC", ai: "AI 연구", videos: (n) => `동영상 ${n}개`,
-    tagline: "알고리즘 없이, 엄선한 채널의 영상만.", updated: "업데이트", export: "데이터 내보내기 (JSON)",
+    suggest: "제보하기",
     noResults: "결과가 없습니다.", noLater: "나중에 볼 영상이 없습니다. 썸네일의 시계 버튼으로 추가하세요.",
     noHistory: "시청 기록이 없습니다.", clear: "모두 지우기", searchFor: (q) => `"${q}" 검색 결과`,
     saveLater: "나중에 볼 영상", saved: "저장됨", more: "더보기", less: "간략히",
@@ -174,7 +173,7 @@ const I18N = {
     search: "Search", lang: "한국어", langBtn: "한국어",
     home: "Home", later: "Watch later", history: "History", channels: "Channels",
     all: "All", startup: "Startups", vc: "VC & Investing", ai: "AI Research", videos: (n) => `${n} videos`,
-    tagline: "No algorithm. Only hand-picked channels.", updated: "Updated", export: "Export data (JSON)",
+    suggest: "Feedback",
     noResults: "No results.", noLater: "Nothing saved yet. Use the clock button on a thumbnail.",
     noHistory: "No watch history.", clear: "Clear all", searchFor: (q) => `Results for "${q}"`,
     saveLater: "Watch later", saved: "Saved", more: "Show more", less: "Show less",
@@ -478,13 +477,15 @@ const ICONS = {
   later: "M14.97 16.95 10 13.87V7h2v5.76l4.03 2.49-1.06 1.7zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z",
   history: "M14.97 16.95 10 13.87V7h2v5.76l4.03 2.49-1.06 1.7zM22 12c0 5.51-4.49 10-10 10S2 17.51 2 12h1c0 4.96 4.04 9 9 9s9-4.04 9-9-4.04-9-9-9C8.81 3 5.92 4.64 4.28 7.38c-.11.18-.22.37-.31.56L3.94 8H8v1H1.96V3h1v4.74c.04-.09.07-.17.11-.25.11-.22.23-.42.35-.63C5.22 3.86 8.51 2 12 2c5.51 0 10 4.49 10 10z",
   channels: "M10 18v-6l5 3-5 3zm7-15H7v1h10V3zm3 3H4v1h16V6zm2 3H2v12h20V9zM3 10h18v10H3V10z",
+  suggest: "M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 12h-2v-2h2v2zm0-4h-2V6h2v4z",
   admin: "M12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7zm7.43-2.53c.04-.32.07-.64.07-.97s-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65A.49.49 0 0 0 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1s.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66z",
 };
+const SUGGEST_URL = "https://viridian-goat-1b5.notion.site/37bc677eb18849dfab60d67b607607a7"; // 제보 설문 (Notion)
 function renderSide(cur) {
   const item = (k, href) => `<a href="${href}" class="${cur === k ? "on" : ""}"><svg viewBox="0 0 24 24"><path d="${ICONS[k]}"/></svg><span>${t(k)}</span></a>`;
   $("#side").innerHTML = item("home", "#/") + item("later", "#/later") + item("history", "#/history") + "<hr>"
-    + item("channels", "#/channels") + (ADMIN ? item("admin", "#/admin") : "")
-    + `<div class="foot">${t("tagline")}${DATA ? `<br>${t("updated")} ${ago(DATA.updated)}<br><a href="videos.json" download style="text-decoration:underline">${t("export")}</a>` : ""}</div>`;
+    + item("channels", "#/channels") + item("suggest", SUGGEST_URL).replace("<a ", '<a target="_blank" rel="noopener" ')
+    + (ADMIN ? item("admin", "#/admin") : "");
 }
 function applyLang() {
   document.documentElement.lang = lang;
