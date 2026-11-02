@@ -203,7 +203,8 @@ const linkify = (s) => esc(s).replace(/https?:\/\/[^\s<]+/g, (u) => `<a href="${
 let DATA = null, CH = {}, BYID = {};
 async function load() {
   view.innerHTML = `<p class="empty">${t("loading")}</p>`;
-  try { DATA = await (await fetch("videos.json", { cache: "no-cache" })).json(); }
+  // 분 단위 쿼리로 Pages CDN 캐시(최대 10분)를 우회 → 갱신 후 최대 1분 안에 반영
+  try { DATA = await (await fetch(`videos.json?m=${Math.floor(Date.now() / 60000)}`)).json(); }
   catch { view.innerHTML = `<p class="empty">${t("loadErr")}</p>`; return; }
   CH = Object.fromEntries(DATA.channels.map((c) => [c.id, c]));
   DATA.videos = DATA.videos.filter((v) => CH[v.channel]);
@@ -338,7 +339,7 @@ function pageChannel(id) {
 const REPO = "iamnotfemale/StarTube";
 let ADMIN = store.get("adminKey", null);
 async function gh(path, opts = {}) {
-  const r = await fetch(`https://api.github.com/repos/${REPO}${path && "/" + path}`, { ...opts,
+  const r = await fetch(`https://api.github.com/repos/${REPO}${path && "/" + path}`, { cache: "no-store", ...opts,
     headers: { Authorization: `Bearer ${ADMIN}`, Accept: "application/vnd.github+json", ...opts.headers } });
   if (!r.ok) throw new Error(`GitHub ${r.status}: ${(await r.json().catch(() => ({}))).message ?? ""}`);
   return r.status === 204 ? null : r.json();
@@ -437,7 +438,13 @@ async function pageAdmin() {
     if (!b) return;
     const d = b.dataset;
     if (d.delch && confirm(`채널을 삭제할까요?\n${d.delch}`))
-      run(() => editRepoFile("channels.txt", (txt) => txt.split("\n").filter((l) => l.replace(/\r$/, "") !== d.delch).join("\n"), `remove channel ${d.delch}`))();
+      run(async () => {
+        await editRepoFile("channels.txt", (txt) => txt.split("\n").filter((l) => l.replace(/\r$/, "") !== d.delch).join("\n"), `remove channel ${d.delch}`);
+        // 수집을 기다리지 않고 이 화면에서 바로 빼기
+        const key = d.delch.split("|")[1].trim(), c = DATA.channels.find((x) => x.handle === key || x.id === key);
+        if (c) { DATA.channels = DATA.channels.filter((x) => x !== c); DATA.videos = DATA.videos.filter((v) => v.channel !== c.id); delete CH[c.id];
+          BYID = Object.fromEntries(DATA.videos.map((v) => [v.id, v])); }
+      })();
     if (d.unhide) run(() => editRepoFile("hidden.txt", (txt) => txt.split("\n").filter((l) => l.replace(/\r$/, "") !== d.unhide).join("\n"), "unhide video"))();
     const close = (n) => gh(`issues/${n}`, { method: "PATCH", body: JSON.stringify({ state: "closed" }) });
     if (d.close) run(() => close(d.close))();
