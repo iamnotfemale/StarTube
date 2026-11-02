@@ -12,11 +12,16 @@
   --line: #e5e5e5; --accent: #6d5dfc; --chip-on: #0f0f0f; --chip-on-text: #fff;
   --hover: rgba(0,0,0,.05); --link: #065fd4;
 }
+/* 기본은 기기 설정, 테마 버튼으로 data-theme 지정 시 그쪽 우선 */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #0f0f0f; --bg2: #272727; --bg3: #3f3f3f; --text: #f1f1f1; --muted: #aaa;
     --line: #303030; --accent: #8b7dff; --chip-on: #f1f1f1; --chip-on-text: #0f0f0f; --hover: rgba(255,255,255,.08); --link: #3ea6ff;
   }
+}
+:root[data-theme="dark"] {
+  --bg: #0f0f0f; --bg2: #272727; --bg3: #3f3f3f; --text: #f1f1f1; --muted: #aaa;
+  --line: #303030; --accent: #8b7dff; --chip-on: #f1f1f1; --chip-on-text: #0f0f0f; --hover: rgba(255,255,255,.08); --link: #3ea6ff;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--text); }
@@ -37,7 +42,10 @@ svg { width: 24px; height: 24px; fill: currentColor; flex: none; }
 .search input:focus { border-color: var(--link); }
 .search button { width: 64px; height: 40px; border: 1px solid var(--bg3); background: var(--bg2);
   border-radius: 0 40px 40px 0; display: grid; place-items: center; }
-.right { flex: 1 0 0; display: flex; justify-content: flex-end; }
+.right { flex: 1 0 0; display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+.theme { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; }
+.theme:hover { background: var(--hover); }
+.theme svg { width: 22px; height: 22px; }
 .lang { height: 32px; padding: 0 12px; border-radius: 16px; border: 1px solid var(--bg3); font-size: 13px; font-weight: 500; }
 .lang:hover { background: var(--hover); }
 
@@ -145,7 +153,7 @@ main { margin-left: 220px; padding: 56px 24px 40px; }
     <input id="q" type="search" autocomplete="off" data-i18n-ph="search">
     <button data-i18n-label="search"><svg viewBox="0 0 24 24"><path d="M20.87 20.17l-5.59-5.59C16.35 13.35 17 11.75 17 10c0-3.87-3.13-7-7-7s-7 3.13-7 7 3.13 7 7 7c1.75 0 3.35-.65 4.58-1.71l5.59 5.59.7-.71zM10 16c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/></svg></button>
   </form>
-  <div class="right"><button class="lang" id="lang" data-i18n-label="lang"></button></div>
+  <div class="right"><button class="lang" id="lang" data-i18n-label="lang"></button><button class="theme" id="theme" data-i18n-label="theme"></button></div>
 </header>
 <nav class="side" id="side"></nav>
 <main id="view"></main>
@@ -160,7 +168,7 @@ const I18N = {
     noResults: "결과가 없습니다.", noLater: "나중에 볼 영상이 없습니다. 썸네일의 시계 버튼으로 추가하세요.",
     noHistory: "시청 기록이 없습니다.", clear: "모두 지우기", searchFor: (q) => `"${q}" 검색 결과`,
     saveLater: "나중에 볼 영상", saved: "저장됨", more: "더보기", less: "간략히",
-    loading: "불러오는 중…", loadErr: "데이터를 불러오지 못했습니다.", report: "신고", admin: "관리", hide: "숨기기",
+    loading: "불러오는 중…", loadErr: "데이터를 불러오지 못했습니다.", report: "신고", admin: "관리", hide: "숨기기", theme: "다크 모드 전환",
   },
   en: {
     search: "Search", lang: "한국어", langBtn: "한국어",
@@ -170,7 +178,7 @@ const I18N = {
     noResults: "No results.", noLater: "Nothing saved yet. Use the clock button on a thumbnail.",
     noHistory: "No watch history.", clear: "Clear all", searchFor: (q) => `Results for "${q}"`,
     saveLater: "Watch later", saved: "Saved", more: "Show more", less: "Show less",
-    loading: "Loading…", loadErr: "Failed to load data.", report: "Report", admin: "Admin", hide: "Hide",
+    loading: "Loading…", loadErr: "Failed to load data.", report: "Report", admin: "Admin", hide: "Hide", theme: "Toggle dark mode",
   },
 };
 const CATS = ["startup", "vc", "ai"];
@@ -496,6 +504,14 @@ function route() {
 addEventListener("hashchange", route);
 $("#search").onsubmit = (e) => { e.preventDefault(); const q = $("#q").value.trim(); location.hash = q ? `#/search?q=${encodeURIComponent(q)}` : "#/"; };
 $("#lang").onclick = () => { lang = lang === "ko" ? "en" : "ko"; store.set("lang", lang); applyLang(); route(); };
+// 테마: 저장값 없으면 기기 설정. 아이콘은 누르면 바뀔 모드(다크일 때 해, 라이트일 때 달)
+const SUN = '<svg viewBox="0 0 24 24"><path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zM11 1h2v3h-2zm0 19h2v3h-2zM3.51 4.93l1.42-1.42 2.12 2.12-1.42 1.42zm12.02 12.02 1.42-1.42 2.12 2.12-1.42 1.42zM20 11h3v2h-3zM1 11h3v2H1zm15.54-5.37 2.12-2.12 1.42 1.42-2.12 2.12zM3.51 19.07l2.12-2.12 1.42 1.42-2.12 2.12z"/></svg>';
+const MOON = '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>';
+const isDark = () => (document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")) === "dark";
+const paintTheme = () => ($("#theme").innerHTML = isDark() ? SUN : MOON);
+if (store.get("theme", null)) document.documentElement.dataset.theme = store.get("theme", null);
+$("#theme").onclick = () => { document.documentElement.dataset.theme = isDark() ? "light" : "dark"; store.set("theme", document.documentElement.dataset.theme); paintTheme(); };
+paintTheme();
 addEventListener("keydown", (e) => {
   if (e.key === "/" && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); $("#q").focus(); }
 });
