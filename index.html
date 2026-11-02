@@ -216,10 +216,19 @@ async function load() {
   // 분 단위 쿼리로 Pages CDN 캐시(최대 10분)를 우회 → 갱신 후 최대 1분 안에 반영
   try { DATA = await (await fetch(`videos.json?m=${Math.floor(Date.now() / 60000)}`)).json(); }
   catch { view.innerHTML = `<p class="empty">${t("loadErr")}</p>`; return; }
-  CH = Object.fromEntries(DATA.channels.map((c) => [c.id, c]));
-  DATA.videos = DATA.videos.filter((v) => CH[v.channel]);
-  BYID = Object.fromEntries(DATA.videos.map((v) => [v.id, v]));
+  applyPending();
   route();
+}
+// 관리에서 지운 채널·숨긴 영상을 기억해서, 새 videos.json이 배포되기 전(1~2분)에 새로고침해도 빠져 보이게 한다.
+// 그 이후 수집된 데이터(updated가 더 최근)가 오면 기억은 자동으로 지워진다.
+function applyPending(add) {
+  const p = store.get("pending", []).concat(add ?? []).filter((x) => x.at > Date.parse(DATA.updated));
+  store.set("pending", p);
+  const gone = new Set(p.map((x) => x.id));
+  DATA.channels = DATA.channels.filter((c) => !gone.has(c.id));
+  CH = Object.fromEntries(DATA.channels.map((c) => [c.id, c]));
+  DATA.videos = DATA.videos.filter((v) => CH[v.channel] && !gone.has(v.id));
+  BYID = Object.fromEntries(DATA.videos.map((v) => [v.id, v]));
 }
 
 // ---------- 나중에 볼 / 기록 ----------
@@ -373,8 +382,7 @@ function chanOf(s) {
 }
 async function hideVideo(id, title) {
   await editRepoFile("hidden.txt", (txt) => txt.replace(/\n*$/, "\n") + `${id} # ${title.replace(/\s+/g, " ")}\n`, `hide ${id}`);
-  DATA.videos = DATA.videos.filter((v) => v.id !== id);
-  delete BYID[id];
+  applyPending({ id, at: Date.now() });
 }
 
 async function pageAdmin() {
@@ -452,10 +460,9 @@ async function pageAdmin() {
     if (d.delch && confirm(`채널을 삭제할까요?\n${d.delch}`))
       run(async () => {
         await editRepoFile("channels.txt", (txt) => txt.split("\n").filter((l) => l.replace(/\r$/, "") !== d.delch).join("\n"), `remove channel ${d.delch}`);
-        // 수집을 기다리지 않고 이 화면에서 바로 빼기
+        // 수집을 기다리지 않고 바로 빼기
         const key = d.delch.split("|")[1].trim(), c = DATA.channels.find((x) => x.handle === key || x.id === key);
-        if (c) { DATA.channels = DATA.channels.filter((x) => x !== c); DATA.videos = DATA.videos.filter((v) => v.channel !== c.id); delete CH[c.id];
-          BYID = Object.fromEntries(DATA.videos.map((v) => [v.id, v])); }
+        if (c) applyPending({ id: c.id, at: Date.now() });
       })();
     if (d.unhide) run(() => editRepoFile("hidden.txt", (txt) => txt.split("\n").filter((l) => l.replace(/\r$/, "") !== d.unhide).join("\n"), "unhide video"))();
     const close = (n) => gh(`issues/${n}`, { method: "PATCH", body: JSON.stringify({ state: "closed" }) });
