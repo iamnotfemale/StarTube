@@ -96,8 +96,10 @@ main { margin-left: 220px; padding: 56px 24px 40px; }
 .chanrow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .chanrow .avatar { width: 40px; height: 40px; }
 .chanrow .name { font-weight: 500; font-size: 16px; }
-.chanrow .btn { margin-left: auto; }
-.desc { background: var(--bg2); border-radius: 12px; padding: 12px; margin-top: 12px; white-space: pre-wrap; word-break: break-word; }
+.chanrow .name { margin-right: auto; } /* 버튼들은 오른쪽에 나란히 */
+.desc { background: var(--bg2); border-radius: 12px; padding: 12px; margin-top: 12px; word-break: break-word; }
+#desc { white-space: pre-wrap; }
+#desctoggle { display: block; padding: 0; margin-top: 4px; }
 .desc b { display: block; margin-bottom: 4px; }
 .desc a { color: var(--link); }
 
