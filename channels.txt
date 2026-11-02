@@ -7,7 +7,6 @@ startup | @eo_korea
 startup | UCWgXoKQ4rl7SY9UHuAwxvzQ
 startup | @ttimestv
 startup | @dcampkor
-ai | @jocoding
 ai | @teddynote
 
 # 영어
