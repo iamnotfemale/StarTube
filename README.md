@@ -4,7 +4,7 @@
 
 **알고리즘 없이, 엄선한 스타트업·창업·AI 영상만.**
 
-👉 **https://iamnotfemale.github.io/StarTube/**
+👉 **https://startube.yeoziphab.com/**
 
 YouTube에서 창업 영상을 보다 보면 어느새 취미 영상, 쇼츠, 자극적인 추천 영상으로 넘어가 있곤 합니다.
 StarTube는 스타트업·창업·AI 연구에만 집중하려고 만든 영상 사이트입니다. 직접 고른 채널의 영상만 보여주고 추천 알고리즘은 쓰지 않습니다.
