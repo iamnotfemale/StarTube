@@ -13,4 +13,3 @@ startup | @ycombinator
 startup | @ecorner
 vc | @a16z
 ai | @AndrejKarpathy
-ai | @DwarkeshPatel
