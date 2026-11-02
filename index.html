@@ -338,7 +338,7 @@ function pageChannel(id) {
 const REPO = "iamnotfemale/StarTube";
 let ADMIN = store.get("adminKey", null);
 async function gh(path, opts = {}) {
-  const r = await fetch(`https://api.github.com/repos/${REPO}/${path}`, { ...opts,
+  const r = await fetch(`https://api.github.com/repos/${REPO}${path && "/" + path}`, { ...opts,
     headers: { Authorization: `Bearer ${ADMIN}`, Accept: "application/vnd.github+json", ...opts.headers } });
   if (!r.ok) throw new Error(`GitHub ${r.status}: ${(await r.json().catch(() => ({}))).message ?? ""}`);
   return r.status === 204 ? null : r.json();
@@ -365,7 +365,21 @@ async function hideVideo(id, title) {
 }
 
 async function pageAdmin() {
-  if (!ADMIN) { view.innerHTML = `<p class="empty">관리 키가 필요합니다. <code>#/admin?key=…</code> 링크로 접속하세요.</p>`; return; }
+  if (!ADMIN) {
+    view.innerHTML = `<div class="admin"><div class="pagehead"><h1>관리</h1></div>
+      <p class="sub">관리 키(StarTube 저장소에 쓰기 권한이 있는 GitHub 토큰)를 붙여넣으세요. 이 브라우저에만 저장됩니다.</p>
+      <form id="login"><input name="key" type="password" required autocomplete="off" placeholder="github_pat_…"><button class="btn primary">확인</button></form>
+      <p class="status" id="ast"></p></div>`;
+    $("#login").onsubmit = async (e) => {
+      e.preventDefault();
+      ADMIN = new FormData(e.target).get("key").trim();
+      try {
+        if (!(await gh("")).permissions?.push) throw new Error("이 토큰에는 저장소 쓰기 권한이 없습니다");
+        store.set("adminKey", ADMIN); route();
+      } catch (err) { ADMIN = null; $("#ast").textContent = `확인 실패: ${err.message}`; }
+    };
+    return;
+  }
   view.innerHTML = `<div class="admin"><div class="pagehead"><h1>관리</h1><button class="btn" id="logout">이 브라우저에서 키 지우기</button></div>
     <p class="status" id="ast">불러오는 중…</p>
     <h2>품질 검수 요청</h2><div id="reports"></div>
