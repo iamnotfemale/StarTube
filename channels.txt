@@ -10,7 +10,6 @@ ai | @teddynote
 
 # 영어
 startup | @ycombinator
-startup | @LennysPodcast
 startup | @ecorner
 vc | @a16z
 ai | @AndrejKarpathy
