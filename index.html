@@ -216,6 +216,7 @@ async function load() {
 
 // ---------- 나중에 볼 / 기록 ----------
 const CLOCK = '<svg viewBox="0 0 24 24"><path d="M14.97 16.95 10 13.87V7h2v5.76l4.03 2.49-1.06 1.7zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>';
+const YT = '<svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>';
 const CHECK = '<svg viewBox="0 0 24 24"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
 function toggleLater(id) {
   later = later.includes(id) ? later.filter((v) => v !== id) : later.concat(id);
@@ -289,11 +290,12 @@ function pageWatch(id) {
     ...pool.filter((x) => x.channel !== v.channel && CH[x.channel].category === c.category).slice(0, 12)]
     .sort((a, b) => b.published.localeCompare(a.published));
   view.innerHTML = `<div class="watch"><div>
-    <div class="player"><iframe src="https://www.youtube-nocookie.com/embed/${id}?rel=0&autoplay=1&hl=${lang}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen title="${esc(v.title)}"></iframe></div>
+    <div class="player"><iframe src="https://www.youtube-nocookie.com/embed/${id}?rel=0&autoplay=1&hl=${lang}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen; clipboard-write; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen title="${esc(v.title)}"></iframe></div>
     <h1>${esc(v.title)}</h1>
     <div class="chanrow">${c.avatar ? `<img class="avatar" src="${esc(c.avatar)}" alt="">` : ""}
       <a class="name" href="#/channel/${c.id}">${esc(c.name)}</a>
       <button class="btn${on ? " on" : ""}" data-later data-id="${id}">${on ? CHECK : CLOCK}<span>${t(on ? "saved" : "saveLater")}</span></button>
+      <a class="btn" href="https://www.youtube.com/watch?v=${id}" target="_blank" rel="noopener">${YT}<span>YouTube</span></a>
       ${ADMIN ? `<button class="btn" id="hidevid">${t("hide")}</button>`
         : `<a class="btn" target="_blank" rel="noopener" href="https://github.com/${REPO}/issues/new?${new URLSearchParams({ template: "report.yml", title: `[신고] ${v.title}`, video: id })}">${t("report")}</a>`}</div>
     <div class="desc"><b>${ago(v.published)}</b><span id="desc">${linkify(long ? v.desc.slice(0, 200) + "…" : v.desc)}</span>
