@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>StarTube</title>
 <meta name="description" content="알고리즘 없이, 엄선한 스타트업·창업·AI 영상만 모아 보는 곳">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="StarTube">
+<meta property="og:title" content="StarTube">
+<meta property="og:description" content="알고리즘 없이, 엄선한 스타트업·창업·AI 영상만 모아 보는 곳">
+<meta property="og:url" content="https://iamnotfemale.github.io/StarTube/">
+<meta property="og:image" content="https://iamnotfemale.github.io/StarTube/og.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://i.ytimg.com https://yt3.ggpht.com; frame-src https://www.youtube-nocookie.com; connect-src 'self' https://api.github.com; object-src 'none'; base-uri 'none'">
 <style>
 :root {
@@ -313,7 +322,7 @@ function pageWatch(id) {
       <button class="btn${on ? " on" : ""}" data-later data-id="${id}">${on ? CHECK : CLOCK}<span>${t(on ? "saved" : "saveLater")}</span></button>
       <a class="btn" href="https://www.youtube.com/watch?v=${id}" target="_blank" rel="noopener">${YT}<span>YouTube</span></a>
       ${ADMIN ? `<button class="btn" id="hidevid">${t("hide")}</button>`
-        : `<a class="btn" target="_blank" rel="noopener" href="https://github.com/${REPO}/issues/new?${new URLSearchParams({ template: "report.yml", title: `[신고] ${v.title}`, video: id })}">${t("report")}</a>`}</div>
+        : `<a class="btn" target="_blank" rel="noopener" href="${SUGGEST_URL}">${t("report")}</a>`}</div>
     <div class="desc"><b>${ago(v.published)}</b><span id="desc">${linkify(long ? v.desc.slice(0, 200) + "…" : v.desc)}</span>
       ${long ? `<button class="sub" id="desctoggle">${t("more")}</button>` : ""}</div></div>
     <div class="related">${related.map((r) => `<a class="rcard" href="#/watch/${r.id}">

@@ -1,5 +1,7 @@
 # StarTube
 
+![StarTube](og.png)
+
 **알고리즘 없이, 엄선한 스타트업·창업·AI 영상만.**
 
 👉 **https://iamnotfemale.github.io/StarTube/**
@@ -27,18 +29,18 @@ StarTube는 스타트업·창업·AI 연구에만 집중하려고 만든 영상 
 - **나중에 볼 영상·시청 기록**: 계정 없이 브라우저에 저장
 - **집중 시청 페이지**: 사이트 안에서 바로 재생하고, 오른쪽에는 같은 채널·같은 주제 영상만 표시
 - **한국어 / English**, **다크 모드**, PC·모바일 지원
-- **신고**: 주제와 맞지 않는 영상은 영상 페이지의 '신고' 버튼으로 알려주세요 (GitHub 계정 필요)
+- **신고**: 주제와 맞지 않는 영상은 영상 페이지의 '신고' 버튼으로 알려주세요 (계정 필요 없음)
 - **데이터 내보내기**: 전체 영상 목록을 [`videos.json`](videos.json)으로 받아서 자기만의 버전을 만들 수 있습니다
 
 ## 큐레이션 채널
 
 | 카테고리 | 한국어 | 영어 |
 |---|---|---|
-| 스타트업·창업 | EO Korea, BZCF 비즈까페, 티타임즈TV, 디캠프 | Y Combinator, Lenny's Podcast, Stanford eCorner |
+| 스타트업·창업 | EO Korea, BZCF 비즈까페, 디캠프 | Y Combinator, Lenny's Podcast, Stanford eCorner |
 | 투자·VC | | a16z |
 | AI 연구 | 테디노트 | Andrej Karpathy, Dwarkesh Patel |
 
-전체 목록은 [`channels.txt`](channels.txt)에 있습니다. 좋은 채널을 알고 계시면 [이슈](https://github.com/iamnotfemale/StarTube/issues)로 알려주세요.
+전체 목록은 [`channels.txt`](channels.txt)에 있습니다. 좋은 채널을 알고 계시면 사이트의 [제보하기](https://viridian-goat-1b5.notion.site/37bc677eb18849dfab60d67b607607a7)로 알려주세요.
 
 ## 작동 방식
 
