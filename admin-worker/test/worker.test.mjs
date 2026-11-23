@@ -37,7 +37,7 @@ test('password login creates a secure session and restores it', async () => {
   const cookie = response.headers.get('Set-Cookie');
   for (const flag of ['HttpOnly', 'Secure', 'SameSite=Strict', 'Max-Age=28800']) assert.ok(cookie.includes(flag));
   assert.ok(!cookie.includes('test-password') && !cookie.includes('test-github-token'));
-  assert.deepEqual(await (await request('session', 'GET', undefined, cookie.split(';')[0])).json(), { authenticated: true });
+  assert.deepEqual(await (await request('session', 'GET', undefined, cookie.split(';')[0])).json(), { authenticated: true, canWrite: true });
 });
 test('wrong password, missing session and forged cookies fail', async () => {
   assert.equal((await request('login', 'POST', { password: 'wrong' })).status, 401);
@@ -93,7 +93,7 @@ test('logout expires browser cookie', async () => {
   const response = await request('logout', 'POST', undefined, await login());
   assert.equal(response.status, 200);
   assert.match(response.headers.get('Set-Cookie'), /Max-Age=0/);
-  assert.deepEqual(await (await request('session')).json(), { authenticated: false });
+  assert.deepEqual(await (await request('session')).json(), { authenticated: false, canWrite: false });
 });
 test('invalid and oversized JSON fail without an upstream call', async () => {
   const cookie = await login();
@@ -110,4 +110,14 @@ test('missing configuration and GitHub authentication failures are actionable', 
   env.SESSION_SECRET = '';
   assert.equal((await request('session')).status, 503);
   globalThis.fetch = nativeFetch;
+});
+
+test('login and public reads work without a write token; writes fail explicitly', async () => {
+  delete env.GITHUB_TOKEN;
+  const cookie = await login();
+  assert.deepEqual(await (await request('session', 'GET', undefined, cookie)).json(), { authenticated: true, canWrite: false });
+  assert.equal((await request('github/contents/channels.txt', 'GET', undefined, cookie)).status, 200);
+  assert.equal(calls[0].options.headers.Authorization, undefined);
+  assert.equal((await request('github/contents/channels.txt', 'PUT', { content: 'YWJj', sha: 'abc', message: 'test' }, cookie)).status, 503);
+  assert.equal(calls.length, 1);
 });

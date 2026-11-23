@@ -322,7 +322,7 @@ function pageWatch(id) {
       <a class="name" href="#/channel/${c.id}">${esc(c.name)}</a>
       <button class="btn${on ? " on" : ""}" data-later data-id="${id}">${on ? CHECK : CLOCK}<span>${t(on ? "saved" : "saveLater")}</span></button>
       <a class="btn" href="https://www.youtube.com/watch?v=${id}" target="_blank" rel="noopener">${YT}<span>YouTube</span></a>
-      ${ADMIN ? `<button class="btn" id="hidevid">${t("hide")}</button>`
+      ${ADMIN_WRITABLE ? `<button class="btn" id="hidevid">${t("hide")}</button>`
         : `<a class="btn" target="_blank" rel="noopener" href="${SUGGEST_URL}">${t("report")}</a>`}</div>
     <div class="desc"><b>${ago(v.published)}</b><span id="desc">${linkify(long ? v.desc.slice(0, 200) + "…" : v.desc)}</span>
       ${long ? `<button class="sub" id="desctoggle">${t("more")}</button>` : ""}</div></div>
@@ -366,6 +366,7 @@ function pageChannel(id) {
 // ---------- 관리 ----------
 // 비밀번호 확인과 GitHub 인증은 같은 도메인의 Cloudflare Worker에서 처리한다.
 let ADMIN = false;
+let ADMIN_WRITABLE = false;
 store.set("adminKey", null); // 이전 버전이 브라우저에 저장했던 토큰 제거
 async function adminRequest(path, opts = {}) {
   const r = await fetch(`/admin/api/${path}`, { cache: "no-store", credentials: "same-origin", ...opts,
@@ -409,7 +410,8 @@ async function pageAdmin() {
       const button = e.target.querySelector("button");
       button.disabled = true;
       try {
-        await adminRequest("login", { method: "POST", body: JSON.stringify({ password: new FormData(e.target).get("password") }) });
+        const session = await adminRequest("login", { method: "POST", body: JSON.stringify({ password: new FormData(e.target).get("password") }) });
+        ADMIN_WRITABLE = session.canWrite === true;
         ADMIN = true; route();
       } catch (err) { $("#ast").textContent = `로그인 실패: ${err.message}`; }
       finally { button.disabled = false; }
@@ -422,6 +424,7 @@ async function pageAdmin() {
     <h2>채널</h2><form id="addch"><select name="cat">${CATS.map((c) => `<option value="${c}">${t(c)}</option>`).join("")}</select>
       <input name="ch" required placeholder="채널 주소, @핸들 또는 UC… 채널 ID"><button class="btn primary">추가</button></form><div id="chs"></div>
     <h2>숨긴 영상</h2><form id="addhide"><input name="v" required placeholder="영상 주소 또는 ID"><button class="btn primary">숨기기</button></form><div id="hidden"></div></div>`;
+  if (!ADMIN_WRITABLE) view.querySelectorAll(".admin button:not(#logout)").forEach((button) => { button.disabled = true; });
   const status = (s) => ($("#ast").textContent = s);
   const run = (fn) => async (e) => {
     e?.preventDefault?.();
@@ -458,6 +461,10 @@ async function pageAdmin() {
     try { const r = (await gh("actions/runs?per_page=1")).workflow_runs[0];
       status(r ? `최근 수집: ${r.status === "completed" ? (r.conclusion === "success" ? "성공" : "실패") : "진행 중"} · ${ago(r.created_at)}` : "");
     } catch { status(""); } // 토큰에 Actions 읽기 권한이 없으면 생략
+    if (!ADMIN_WRITABLE) {
+      view.querySelectorAll(".admin button:not(#logout)").forEach((button) => { button.disabled = true; });
+      status("현재 읽기 전용입니다. 저장하려면 Worker 설정에 GITHUB_TOKEN을 연결해야 합니다.");
+    }
   }
 
   $("#addch").onsubmit = run(async (e) => {
@@ -540,7 +547,7 @@ addEventListener("keydown", (e) => {
 });
 applyLang();
 (async () => {
-  try { ADMIN = (await adminRequest("session")).authenticated === true; } catch { ADMIN = false; }
+  try { const session = await adminRequest("session"); ADMIN = session.authenticated === true; ADMIN_WRITABLE = session.canWrite === true; } catch { ADMIN = false; }
   load();
 })();
 </script>

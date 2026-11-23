@@ -37,7 +37,7 @@ export default {
       return new Response(page.body, { status: page.status, headers });
     }
     if (!url.pathname.startsWith('/admin/api/')) return json({ message: '찾을 수 없습니다.' }, 404);
-    if (!env.ADMIN_PASSWORD || !env.SESSION_SECRET || !env.GITHUB_TOKEN || !env.LOGIN_LIMITER) {
+    if (!env.ADMIN_PASSWORD || !env.SESSION_SECRET || !env.LOGIN_LIMITER) {
       return json({ message: '관리자 서버 설정이 필요합니다.' }, 503);
     }
     if (!['GET', 'POST', 'PUT', 'PATCH'].includes(request.method)) return json({ message: '허용되지 않은 요청입니다.' }, 405);
@@ -56,11 +56,11 @@ export default {
         const match = await crypto.subtle.verify('HMAC', await key(env.SESSION_SECRET), Uint8Array.from(expected.match(/../g), b => parseInt(b, 16)), encoder.encode(body.password));
         if (!match) return json({ message: '비밀번호가 올바르지 않습니다.' }, 401);
         const value = `${Math.floor(Date.now() / 1000) + TTL}.${crypto.randomUUID().replaceAll('-', '')}`;
-        return json({ authenticated: true }, 200, { 'Set-Cookie': cookie(`${value}.${await signature(value, env.SESSION_SECRET)}`, TTL) });
+        return json({ authenticated: true, canWrite: Boolean(env.GITHUB_TOKEN) }, 200, { 'Set-Cookie': cookie(`${value}.${await signature(value, env.SESSION_SECRET)}`, TTL) });
       }
       if (path === 'logout' && request.method === 'POST') return json({ authenticated: false }, 200, { 'Set-Cookie': cookie('', 0) });
       const loggedIn = await authenticated(request, env);
-      if (path === 'session' && request.method === 'GET') return json({ authenticated: loggedIn });
+      if (path === 'session' && request.method === 'GET') return json({ authenticated: loggedIn, canWrite: loggedIn && Boolean(env.GITHUB_TOKEN) });
       if (!loggedIn) return json({ message: '로그인이 필요합니다.' }, 401);
       const target = path.startsWith('github/') ? path.slice(7) : null;
       const file = /^contents\/(channels\.txt|hidden\.txt)$/.test(target);
@@ -68,6 +68,7 @@ export default {
       const allowed = request.method === 'GET' ? file || target === 'issues' || target === 'actions/runs'
         : request.method === 'PUT' ? file : request.method === 'PATCH' && issue;
       if (!allowed) return json({ message: '허용되지 않은 작업입니다.' }, 403);
+      if (request.method !== 'GET' && !env.GITHUB_TOKEN) return json({ message: 'GitHub 저장 권한 연결이 필요합니다. Worker에 GITHUB_TOKEN을 등록하세요.' }, 503);
       let body;
       if (request.method !== 'GET') {
         const input = await readBody(request);
@@ -81,7 +82,7 @@ export default {
       }
       const query = target === 'issues' ? '?labels=report&state=open&per_page=100' : target === 'actions/runs' ? '?per_page=1' : '';
       const upstream = await fetch(`https://api.github.com/repos/${REPO}/${target}${query}`, {
-        method: request.method, headers: { Authorization: `Bearer ${env.GITHUB_TOKEN}`, Accept: 'application/vnd.github+json',
+        method: request.method, headers: { ...(env.GITHUB_TOKEN ? { Authorization: `Bearer ${env.GITHUB_TOKEN}` } : {}), Accept: 'application/vnd.github+json',
           'Content-Type': 'application/json', 'User-Agent': 'StarTube-Admin', 'X-GitHub-Api-Version': '2022-11-28' }, body,
       });
       if (!upstream.ok) return json({ message: `GitHub 요청 실패 (${upstream.status})` }, upstream.status === 401 ? 502 : upstream.status);
