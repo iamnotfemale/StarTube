@@ -1,2 +1,4 @@
 .env
 .claude/
+admin-worker/.wrangler/
+admin-worker/.dev.vars

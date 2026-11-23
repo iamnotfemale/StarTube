@@ -61,6 +61,6 @@ channels.txt ──▶ fetch.mjs (YouTube Data API) ──▶ videos.json ──
    node --env-file=.env fetch.mjs
    python -m http.server 8123
    ```
-3. 배포하려면 저장소 Secret에 `YT_API_KEY`를 등록하고 GitHub Pages(main, /root)를 켭니다. 관리 탭은 저장소 쓰기 권한이 있는 Fine-grained 토큰(Contents·Issues 쓰기, Actions 읽기)을 `#/admin`에 입력해 사용합니다.
+3. 배포하려면 저장소 Secret에 `YT_API_KEY`를 등록하고 GitHub Pages(main, /root)를 켭니다. 관리자는 `/admin`에서 비밀번호로 로그인합니다. 관리자 API를 처음 연결하는 방법은 [관리자 서버 설정](admin-worker/README.md)을 참고하세요.
 
 </details>
